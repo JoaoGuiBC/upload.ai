@@ -17,11 +17,11 @@ Content-Type: audio/mpeg
 ###
 
 # @name create-transcription
-POST http://localhost:3333/videos/6678a55b-a999-4089-aaff-df727decf78a/transcription
+POST http://localhost:3333/videos//transcription
 Content-Type: application/json
 
 {
-  "prompt": "poetry, raven"
+  "prompt": "poesia, corvo, fernando pessoa, narração"
 }
 
 ###
@@ -31,7 +31,7 @@ POST http://localhost:3333/ai/complete
 Content-Type: application/json
 
 {
-  "videoId": "6678a55b-a999-4089-aaff-df727decf78a",
+  "videoId": "5c3107b3-4aa0-4651-92de-9133ff5caf25",
   "temperature": 0.5,
   "template": "Gere um resumo sucinto da transcrição do vídeo informada a seguir: '''{transcription}'''"
 }

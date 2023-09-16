@@ -1,18 +1,19 @@
 import { z } from 'zod'
 import { FastifyInstance } from 'fastify'
+import { streamToResponse, OpenAIStream } from 'ai'
 
 import { prisma } from '../lib/prisma'
 import { openai } from '../lib/openai'
 
 const bodySchema = z.object({
   videoId: z.string(),
-  template: z.string(),
+  prompt: z.string(),
   temperature: z.number().min(0).max(1).default(0.5),
 })
 
 export async function generateAICompletionRoute(app: FastifyInstance) {
   app.post('/ai/complete', async (request, reply) => {
-    const { temperature, template, videoId } = bodySchema.parse(request.body)
+    const { temperature, prompt, videoId } = bodySchema.parse(request.body)
 
     const video = await prisma.video.findUniqueOrThrow({
       where: { id: videoId },
@@ -24,14 +25,22 @@ export async function generateAICompletionRoute(app: FastifyInstance) {
         .send({ error: 'Video transcription was not generated yet.' })
     }
 
-    const promptMessage = template.replace('{transcription}', video.transcription)
+    const promptMessage = prompt.replace('{transcription}', video.transcription)
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-3.5-turbo-16k',
       temperature,
       messages: [{ role: 'user', content: promptMessage }],
+      stream: true,
     })
 
-    return response
+    const stream = OpenAIStream(response)
+
+    streamToResponse(stream, reply.raw, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      },
+    })
   })
 }
